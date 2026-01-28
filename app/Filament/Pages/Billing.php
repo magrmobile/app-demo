@@ -6,6 +6,7 @@ use App\Models\Catalogs\RecintoFiscal;
 use App\Models\Catalogs\Regimen;
 use App\Models\Catalogs\TipoDocumento;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -43,6 +44,7 @@ class Billing extends Page implements HasSchemas
     public function form(Schema $schema): Schema
     {
         return $schema
+            ->statePath('data')
             ->components([
                 Section::make()
                     ->schema([
@@ -94,7 +96,6 @@ class Billing extends Page implements HasSchemas
                             ->directory('csv'),
                     ])
                     ->columnSpanFull()
-            ])
-            ->statePath('data');
+            ]);
     }
 }

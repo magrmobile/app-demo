@@ -5,37 +5,40 @@ namespace App\Filament\Pages;
 use App\Models\Catalogs\RecintoFiscal;
 use App\Models\Catalogs\Regimen;
 use App\Models\Catalogs\TipoDocumento;
+use App\Services\Billing\BillingService;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Concerns\InteractsWithSchemas;
-use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use UnitEnum;
 
-class Billing extends Page implements HasSchemas
+class Billing extends Page
 {
-    Use InteractsWithSchemas;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::ArrowUpCircle;
+
+    protected static ?string $navigationLabel = 'Cargar CSV';
+    
+    protected static ?string $title = 'Generar DTE desde CSV';
+    
+    protected static string|UnitEnum|null $navigationGroup = 'Facturacion';
 
     protected string $view = 'filament.pages.billing';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentArrowUp;
-
-    protected static string|UnitEnum|null $navigationGroup = 'Facturacion';
-
-    protected static ?string $title = 'Generar Facturacion (JSON)';
-
-    protected static ?string $navigationLabel = 'Cargar CSV';
-
+    /**
+     * @var array<string, mixed> | null
+     */
     public ?array $data = [];
-    
+
     public function mount(): void
     {
         $this->form->fill();
@@ -46,8 +49,8 @@ class Billing extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make()
-                    ->schema([
+                Section::make([
+                    Form::make([
                         Select::make('type')
                             ->label('Tipo de Documento')
                             ->options(
@@ -95,7 +98,44 @@ class Billing extends Page implements HasSchemas
                             ->disk('public')
                             ->directory('csv'),
                     ])
-                    ->columnSpanFull()
+                    ->footer([
+                        Actions::make([
+                            Action::make('process')
+                                ->label('Procesar Archivo')
+                                ->action('process')
+                        ])
+                    ])
+                ])
             ]);
+    }
+
+    public function process(BillingService $service): void
+    {
+        try {
+            $filePath = Storage::disk('public')->path($this->data['file']);
+
+            $result = $service->handle([
+                'type' => $this->data['type'],
+                'file_path' => $filePath,
+                'file_original_name' => basename($this->data['file']),
+                'comments' => $this->data['comments'] ?? null,
+                'recintoFiscal' => $this->data['recintoFiscal'] ?? null,
+                'regimen' => $this->data['regimen'] ?? null,
+            ]);
+
+            Notification::make()
+                ->title('Proceso completado')
+                ->body($result->confirmMessage)
+                ->success()
+                ->send();
+
+            $this->form->fill([]);
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Error al procesar')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 }

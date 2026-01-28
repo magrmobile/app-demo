@@ -17,6 +17,6 @@ class BoringAvatarsProvider implements Contracts\AvatarProvider
             //->map(fn (string $segment): string => filled($segment) ? mb_substr($segment, 0, 1) : '')
             ->join('');
 
-        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($name);
+        return 'https://api.dicebear.com/9.x/toon-head/svg?seed=' . urlencode($name);
     }
 }

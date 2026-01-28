@@ -5,6 +5,7 @@ namespace App\Services\Billing;
 use App\Services\Billing\DTO\BillingResult;
 use App\Services\Billing\Support\DteRepository;
 use App\Services\Billing\Support\JsonSchemaService;
+use App\Services\Billing\Support\PdfService;
 use App\Services\Billing\Support\SchemaResolver;
 use Illuminate\Support\Str;
 
@@ -14,7 +15,7 @@ class BillingService
         private readonly BillingExcelProcessor $excelProcessor,
         private readonly SchemaResolver $schemaResolver,
         private readonly JsonSchemaService $schemaValidator,
-        //private readonly PdfService $pdfService,
+        private readonly PdfService $pdfService,
         private readonly DteRepository $dteRepo
     ) {}
 
@@ -49,12 +50,12 @@ class BillingService
 
         // 4) Generar PDF (retorna filename)
         $pdfFilename = Str::uuid()->toString() . '.pdf';
-        /*$this->pdfService->generateAndStore(
+        $this->pdfService->generateAndStore(
             json: $json,
             type: $type,
             pdfTemplate: $pdfTemplate,
             pdfFilename: $pdfFilename,
-        );*/
+        );
 
         // 5) Ajuste especial de estructura JSON para tipos 07 y 14 (igual que hoy)
         $jsonForDb = $this->schemaResolver->normalizeJsonForStorageByType($json, $type);

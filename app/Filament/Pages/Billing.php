@@ -17,9 +17,11 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use UnitEnum;
 
 class Billing extends Page
@@ -33,6 +35,10 @@ class Billing extends Page
     protected static string|UnitEnum|null $navigationGroup = 'Facturacion';
 
     protected string $view = 'filament.pages.billing';
+
+    public ?string $pdfFileName = null;
+
+    public bool $showPreview = false;
 
     /**
      * @var array<string, mixed> | null
@@ -95,37 +101,75 @@ class Billing extends Page
                         FileUpload::make('file')
                             ->label('Archivo Excel / CSV')
                             ->required()
-                            ->disk('public')
-                            ->directory('csv'),
+                            ->acceptedFileTypes(['text/csv'])
+                            ->multiple(false)
+                            ->storeFiles(false),
                     ])
                     ->footer([
                         Actions::make([
                             Action::make('process')
                                 ->label('Procesar Archivo')
-                                ->action('process')
+                                ->action('process'),
+                            Action::make('preview')
+                                ->label('Ver PDF')
+                                ->icon(Heroicon::Eye)
+                                ->visible(fn () => $this->pdfFileName !== null)
+                                ->modalHeading('Vista previa del PDF')
+                                ->modalWidth('7x1')
+                                ->modalSubmitAction(false)
+                                ->modalCancelActionLabel('Cerrar')
+                                ->modalContent(fn () => view(
+                                    'filament.billing.pdf-preview',
+                                    ['filename' => $this->pdfFileName]
+                                )),
                         ])
                     ])
-                ])
+                ]),
+                //Section::make('Vista preliminar', [
+                    View::make('filament.billing.pdf-preview')
+                        ->viewData(['pdfFilename' => $this->pdfFileName])
+                        ->columnSpanFull()
+                //])
+                //->columnSpanFull()
             ]);
     }
 
     public function process(BillingService $service): void
     {
         try {
-            $filePath = Storage::disk('public')->path($this->data['file']);
+            /** @var TemporaryUploadedFile $tmp */
+            $tmp = collect($this->data['file'])->first();
+
+            if (!$tmp instanceof TemporaryUploadedFile) {
+                throw new \RuntimeException('Archivo invalido');
+            }
+
+            $relativePath = $tmp->storeAs(
+                'csv',
+                $tmp->getClientOriginalName(),
+                'public'
+            );
+
+            //dd($relativePath);
+
+            $absolutePath = Storage::disk('public')->path($relativePath);
 
             $result = $service->handle([
                 'type' => $this->data['type'],
-                'file_path' => $filePath,
-                'file_original_name' => basename($this->data['file']),
+                'file_path' => $absolutePath,
+                'file_original_name' => $tmp->getClientOriginalName(),
                 'comments' => $this->data['comments'] ?? null,
                 'recintoFiscal' => $this->data['recintoFiscal'] ?? null,
                 'regimen' => $this->data['regimen'] ?? null,
             ]);
 
+            // Guardamos PDF para preview
+            $this->pdfFileName = $result->pdfFileName;
+            $this->showPreview = true;
+
             Notification::make()
-                ->title('Proceso completado')
-                ->body($result->confirmMessage)
+                ->title('Documento generado')
+                ->body('Puedes previsualizar el PDF antes de continuar')
                 ->success()
                 ->send();
 

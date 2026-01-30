@@ -15,9 +15,12 @@ class JsonSchemaService
         $schema = json_decode(file_get_contents($schemaFilePath));
         $jsonDecode = json_decode($json);
 
+        //dd($schema->properties);
+
         $validator = new Validator();
+
         /** @var ValidationResult $result */
-        $result = $validator->validate($jsonDecode, $schema);
+        $result = $validator->validate($jsonDecode, $schema->properties);
 
         if ($result->isValid()) {
             return;

@@ -4,6 +4,7 @@ namespace App\Services\Billing\Support;
 
 use App\Models\Customer;
 use App\Models\Dte;
+use Illuminate\Support\Facades\Auth;
 
 class DteRepository
 {
@@ -27,7 +28,7 @@ class DteRepository
             'codigoGeneracion' => $data->identificacion->codigoGeneracion,
             'file_csv' => $fileCsvOriginalName,
             'json_dte' => $json,
-            'created_by' => auth()->id, // Filament lo tendrá autenticado
+            'created_by' => Auth::id(), // Filament lo tendrá autenticado
             'tipoDte' => $data->identificacion->tipoDte,
         ]);
     }

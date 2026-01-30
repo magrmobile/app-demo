@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Municipio extends Model
 {
     protected $table = 'cat013';
+
     protected $primaryKey = 'id';
+    
     protected $keyType = 'string';
 
     public function departamento(): BelongsTo

@@ -2,17 +2,10 @@
 
 namespace App\Documents;
 
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-use Illuminate\Validation\Validator;
-use Illuminate\Support\Facades\Validator as ValidatorFacade;
-use Illuminate\Validation\ValidationException;
-
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use GuzzleHttp\Client;
 
 use Luecano\NumeroALetras\NumeroALetras;
 

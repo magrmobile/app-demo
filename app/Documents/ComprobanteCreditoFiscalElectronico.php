@@ -36,6 +36,8 @@ class ComprobanteCreditoFiscalElectronico extends DocumentBase
         $data['receptor']['direccion']['complemento'] = isset($this->datosReceptor['complemento']) ? $this->datosReceptor['complemento'] : env('DTE_RECEPTOR_DIRECCION_COMPLEMENTO');
         $data['receptor']['telefono'] = isset($this->datosReceptor['telefono']) ? $this->datosReceptor['telefono'] : env('DTE_RECEPTOR_TELEFONO');
         $data['receptor']['correo'] =  isset($this->datosReceptor['correo']) ? $this->datosReceptor['correo'] : env('DTE_RECEPTOR_EMAIL');
+        $data['receptor']['tipoDocumento'] = isset($this->datosReceptor['nit']) ? 36 : null;
+        $data['receptor']['numDocumento'] = $data['receptor']['nit'];
         //$data['receptor']['correo'] = 'pruebas@enerwire.com';
         
         $data['documentoRelacionado'] = null;
@@ -157,6 +159,8 @@ class ComprobanteCreditoFiscalElectronico extends DocumentBase
 
         // Apendice
         $data['apendice'] = null;
+
+        //dd($data);
 
         return $data;
     }

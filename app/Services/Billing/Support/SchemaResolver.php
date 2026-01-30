@@ -2,6 +2,7 @@
 
 namespace App\Services\Billing\Support;
 
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SchemaResolver
@@ -72,7 +73,10 @@ class SchemaResolver
             $filename = $data->identificacion->codigoGeneracion . '.json';
         }
 
-        file_put_contents(storage_path('app/json/' . $filename), $json);
+        Storage::disk('local')->put(
+            'json/' . $filename,
+            $json
+        );
 
         return $filename;
     }

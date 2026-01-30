@@ -11,6 +11,7 @@ use App\Documents\NotaCreditoElectronica;
 use App\Documents\NotaDebitoElectronica;
 use App\Documents\NotaRemisionElectronica;
 use App\Models\Catalogs\ActividadEconomica;
+use App\Models\Catalogs\Departamento;
 use App\Models\Catalogs\QuickBooksUnits;
 use App\Models\Customer;
 use Exception;
@@ -24,7 +25,6 @@ class BillingExcelProcessor
 
         $receptor = $this->resolveReceptor($rows);
         $receptorData = $this->mapReceptor($receptor);
-
         $detalleLineas = $this->parseDetalleLines($rows);
         $detalle = $this->buildDetalle($detalleLineas);
 
@@ -93,8 +93,8 @@ class BillingExcelProcessor
             'codActividad' => $c->codActividad,
             'descActividad' => $descActividad,
             'nombreComercial' => $c->nombreComercial,
-            'departamento' => $c->departamento,
-            'municipio' => $c->municipio,
+            'departamento' => $c->departamento->id,
+            'municipio' => $c->municipio->id,
             'complemento' => $c->complemento,
             'codPais' => $c->codPais,
             'codDomiciliado' => $c->codDomiciliado,
@@ -171,7 +171,7 @@ class BillingExcelProcessor
                 'due_date' => $row['Due Date'],
             ];
 
-            $tems[] = ['terms' => $row['Terms']];
+            $terms[] = ['terms' => $row['Terms']];
         }
 
         return [

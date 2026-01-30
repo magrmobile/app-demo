@@ -3,14 +3,16 @@
 namespace App\Services\Billing\Support;
 
 use App\Models\Catalogs\CondicionOperacion;
+use App\Models\Catalogs\Departamento;
 use App\Models\Catalogs\ModeloFacturacion;
-use App\Models\Catalogs\TipoDocumento;
+use App\Models\Catalogs\Municipio;
 use App\Models\Catalogs\TipoDocumentoReceptor;
 use App\Models\Catalogs\TipoEstablecimiento;
 use App\Models\Catalogs\TipoTransmision;
 use App\Models\Customer;
 use Dompdf\Dompdf;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 
 class PdfService
 {
@@ -34,11 +36,12 @@ class PdfService
         $dirReceptor = $this->resolveDireccion($data->receptor->direccion ?? null);
 
         // Catalogos MH
-        $tipoDocumento = TipoDocumentoReceptor::label($data->receptor->tipoDocumento ?? null);
-        $modeloFactura = ModeloFacturacion::label($data->identificacion->tipoModelo ?? null);
-        $tipoOperacion = TipoTransmision::label($data->identificacion->tipoOperacion ?? null);
-        $tipoEstablecimiento = TipoEstablecimiento::label($data->emisor->tipoEstablecimiento ?? null);
-        $condicionOperacion = CondicionOperacion::label($data->resumen->condicionOperacion ?? null);
+        $tipoDocumento = TipoDocumentoReceptor::find($data->receptor->tipoDocumento ?? null)->valor;
+        
+        $modeloFactura = ModeloFacturacion::find($data->identificacion->tipoModelo ?? null)->valor;
+        $tipoOperacion = TipoTransmision::find($data->identificacion->tipoOperacion ?? null)->valor;
+        $tipoEstablecimiento = TipoEstablecimiento::find($data->emisor->tipoEstablecimiento ?? null)->valor;
+        $condicionOperacion = CondicionOperacion::find($data->resumen->condicionOperacion ?? null)->valor;
 
         // Casos Especiales
         $nombreContacto = null;
@@ -73,9 +76,25 @@ class PdfService
         $dompdf->loadHtml($html);
         $dompdf->render();
 
-        $path = storage_path('app/sessions/' . $pdfFilename);
-        file_put_contents($path, $dompdf->output());
+        Storage::disk('local')->put(
+            'session/' . $pdfFilename,
+            $dompdf->output()
+        );
 
         return $pdfFilename;
+    }
+
+    private function resolveDireccion(?object $direccion): ?array
+    {
+        if (!$direccion) {
+            return null;
+        }
+
+        return [
+            'desc_depto' => Departamento::find($direccion->departamento ?? null)->valor,
+            'desc_muni' => Municipio::where('departamento_id', $direccion->departamento ?? null)
+                ->where('id', $direccion->municipio ?? null)
+                ->first()->valor,
+        ];
     }
 }

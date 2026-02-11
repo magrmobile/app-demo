@@ -101,7 +101,13 @@ class Billing extends Page
                         FileUpload::make('file')
                             ->label('Archivo Excel / CSV')
                             ->required()
-                            ->acceptedFileTypes(['text/csv'])
+                            ->acceptedFileTypes([
+                                'text/csv',
+                                'text/plain',
+                                'application/csv',
+                                'application/vnd.ms-excel',
+                                'application/octet-stream',
+                            ])
                             ->multiple(false)
                             ->storeFiles(false),
                     ])
